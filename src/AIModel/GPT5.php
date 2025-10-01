@@ -16,7 +16,7 @@ class GPT5 extends OpenAIModel
 
     public function getCode(): string
     {
-        return 'gpt-5-' . $this->version;
+        return 'gpt-5-nano-' . $this->version;
     }
 
     public function getInputPricePerMillionTokens(): float

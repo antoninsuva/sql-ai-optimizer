@@ -55,11 +55,11 @@ readonly class QuerySelector {
                     'maxItems' => 20,
                     'items' => [
                         'type' => 'object',
-                        'required' => ['digest', 'query_sample', 'schema', 'reason'],
+                        'required' => ['queryid', 'query_sample', 'schema', 'reason'],
                         'properties' => [
-                            'digest' => [
+                            'queryid' => [
                                 'type' => 'string',
-                                'description' => 'The query digest hash from pg_stat_statements',
+                                'description' => 'The queryid from pg_stat_statements',
                             ],
                             'query_sample' => [
                                 'type' => 'string',
@@ -125,7 +125,7 @@ readonly class QuerySelector {
                 description: $group['group_description'],
                 queries: array_map(fn (array $query) => new CandidateQuery(
                     schema: $query['schema'],
-                    digest: $query['digest'],
+                    digest: $query['queryid'],
                     normalizedQuery: $query['query_sample'],
                     impactDescription: $query['reason'],
                 ), $group['queries']),

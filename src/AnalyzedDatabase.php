@@ -62,7 +62,7 @@ class AnalyzedDatabase {
             foreach ($list as $item) {
                 $sqls[] = [
                     'sql_text' => $item['query'],
-                    'digest' => $item['queryid'],
+                    'queryid' => $item['queryid'],
                     'current_schema' => $item['current_schema'],
                 ];
             }

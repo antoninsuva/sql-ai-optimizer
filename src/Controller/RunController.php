@@ -277,22 +277,22 @@ class RunController extends BaseController {
         $queries = [];
         $totalQueriesCount = $this->stateDatabase->getQueriesCount($id);
         foreach ($this->stateDatabase->getQueriesWithoutRealQuery($id) as $query) {
-            if (!isset($digests[$query['digest']])) {
-                $digests[$query['digest']] = [];
+            if (!isset($digests[$query['queryid']])) {
+                $digests[$query['queryid']] = [];
             }
 
-            $digests[$query['digest']][] = $query['id'];
+            $digests[$query['queryid']][] = $query['id'];
             $queries[$query['id']] = $query['schema'];
         }
 
         if (!empty($digests)) {
             foreach ($this->analyzedDatabase->getQueryTexts(array_keys($digests)) as $sql) {
-                if (isset($digests[$sql['digest']])) {
-                    foreach ($digests[$sql['digest']] as $i => $id) {
+                if (isset($digests[$sql['queryid']])) {
+                    foreach ($digests[$sql['queryid']] as $i => $id) {
                         if ($queries[$id] === $sql['current_schema']) {
                             $this->stateDatabase->setRealQuery($id, $sql['sql_text']);
                             unset($queries[$id]);
-                            unset($digests[$sql['digest']][$i]);
+                            unset($digests[$sql['queryid']][$i]);
                         }
                     }
                 }
