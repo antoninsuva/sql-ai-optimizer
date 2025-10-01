@@ -42,7 +42,7 @@ class AnalysisController extends BaseController {
             $queryData = $this->stateDatabase->getQuery($queryId);
             $queryObject = new CandidateQuery(
                 schema: $queryData['schema'],
-                digest: $queryData['queryid'],
+                queryid: $queryData['queryid'],
                 normalizedQuery: $queryData['normalized_query'],
                 impactDescription: $queryData['impact_description'],
             );

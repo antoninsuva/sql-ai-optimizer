@@ -54,11 +54,11 @@ class AnalyzedDatabase {
         return null;
     }
 
-    public function getQueryTexts(array $digests): array {
+    public function getQueryTexts(array $queryids): array {
         $sqls = [];
 
         foreach (['pg_stat_statements'] as $table) {
-            $list = $this->connection->query('SELECT query, queryid, \'public\' as current_schema FROM %n', $table, ' WHERE queryid IN (%s)', $digests)->fetchAll();
+            $list = $this->connection->query('SELECT query, queryid, \'public\' as current_schema FROM %n', $table, ' WHERE queryid IN (%s)', $queryids)->fetchAll();
             foreach ($list as $item) {
                 $sqls[] = [
                     'sql_text' => $item['query'],

@@ -122,8 +122,8 @@ GRANT SELECT, SHOW VIEW ON *.* TO 'user'@'your_ip';
 ### Performance Schema
 
  - Enable [performance schema](https://dev.mysql.com/doc/refman/8.4/en/performance-schema-quick-start.html)
- - Configure [performance_schema_digests_size](https://dev.mysql.com/doc/refman/8.4/en/performance-schema-system-variables.html#sysvar_performance_schema_digests_size) to store more query digests
- - Configure [performance_schema_max_digest_length](https://dev.mysql.com/doc/refman/8.4/en/performance-schema-system-variables.html#sysvar_performance_schema_max_digest_length) to see full queries and to avoid merging of results for queries with the same beginning (default is 1024 characters)
+ - Configure [performance_schema_queryids_size](https://dev.mysql.com/doc/refman/8.4/en/performance-schema-system-variables.html#sysvar_performance_schema_queryids_size) to store more query queryids
+ - Configure [performance_schema_max_queryid_length](https://dev.mysql.com/doc/refman/8.4/en/performance-schema-system-variables.html#sysvar_performance_schema_max_queryid_length) to see full queries and to avoid merging of results for queries with the same beginning (default is 1024 characters)
  - Enable the larger query table to get exact queries for analysis by running `UPDATE performance_schema.setup_consumers SET enabled = 'YES' WHERE name = 'events_statements_history_long';`
 
 

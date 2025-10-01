@@ -51,7 +51,7 @@ readonly class QuerySelector {
                 ],
                 'queries' => [
                     'type' => 'array',
-                    'description' => 'Array of query digests to optimize (min 1, max 20)',
+                    'description' => 'Array of query queryids to optimize (min 1, max 20)',
                     'minItems' => 1,
                     'maxItems' => 20,
                     'items' => [
@@ -167,7 +167,7 @@ readonly class QuerySelector {
                 description: $group['group_description'],
                 queries: array_map(fn (array $query) => new CandidateQuery(
                     schema: $query['schema'],
-                    digest: $query['queryid'],
+                    queryid: $query['queryid'],
                     normalizedQuery: $query['query_sample'],
                     impactDescription: $query['reason'],
                 ), $group['queries']),

@@ -86,7 +86,7 @@ class StateDatabase {
     public function createQuery(
         int $runId,
         int $groupId,
-        string $digest,
+        string $queryid,
         string $schema,
         string $normalizedQuery,
         ?string $realQuery,
@@ -94,7 +94,7 @@ class StateDatabase {
     ): void {
         $this->connection->query('INSERT INTO query', [
             'run_id' => $runId,
-            'digest' => $digest,
+            'queryid' => $queryid,
             'group_id' => $groupId,
             'schema' => $schema,
             'normalized_query' => $normalizedQuery,
@@ -162,7 +162,7 @@ class StateDatabase {
     }
 
     public function getQueriesWithoutRealQuery(int $runId): array {
-        return $this->connection->query('SELECT id, digest, schema FROM query WHERE run_id = %i AND real_query IS NULL', $runId)->fetchAll();
+        return $this->connection->query('SELECT id, queryid, schema FROM query WHERE run_id = %i AND real_query IS NULL', $runId)->fetchAll();
     }
 
     public function getQueriesCount(int $runId): int {

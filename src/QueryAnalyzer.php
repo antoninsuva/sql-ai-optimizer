@@ -34,7 +34,7 @@ readonly class QueryAnalyzer {
 
     public function analyzeQuery(int $queryId, ?string $rawSql, CandidateQuery $candidateQuery, bool $useRealQuery, bool $useDatabaseAccess): PromiseInterface {
         if (!$rawSql) {
-            $rawSql = $this->analyzedDatabase->getQueryText($candidateQuery->getDigest(), $candidateQuery->getSchema());
+            $rawSql = $this->analyzedDatabase->getQueryText($candidateQuery->getQueryid(), $candidateQuery->getSchema());
             if ($rawSql) {
                 $this->stateDatabase->setRealQuery(
                     queryId: $queryId,
@@ -64,7 +64,7 @@ readonly class QueryAnalyzer {
         $prompt = <<<EOT
         I need help with optimizing a PostgreSQL 13 query. I have identified this query using pg_stat_statements as consuming too many resources. I will provide you with an example query and the schema of tables used in the query.
 
-        Use provided tool to get more information about tables or its data structure if needed -you can also use to check statistics in pg_stat_statements by provided digest.
+        Use provided tool to get more information about tables or its data structure if needed -you can also use to check statistics in pg_stat_statements by provided queryid.
 
         Analyze all information and provide me with instructions to change the query, update schema or how to split to more manageable queries in PHP.
 
@@ -118,7 +118,7 @@ readonly class QueryAnalyzer {
             $table = $actualTableMap[$lookupKey]; // Use the correctly cased table name
 
             $schema = $this->analyzedDatabase->getConnection()
-                ->query('SELECT pg_get_tabledef(\'public\'::varchar, \'%n\'::varchar, false) as ct', $table)->fetch()['ct'];
+                ->query('SELECT pg_get_tabledef(\'public\'::varchar, %s::varchar, false) as ct', $table)->fetch()['ct'];
 
             $prompt .= "\n\n#### $table\n```\n$schema\n```\n";
 
@@ -131,7 +131,7 @@ readonly class QueryAnalyzer {
 
         Database: {$candidateQuery->getSchema()}
 
-        Query digest: {$candidateQuery->getDigest()}
+        Query queryid: {$candidateQuery->getQueryid()}
 
         EOT;
 

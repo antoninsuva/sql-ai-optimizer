@@ -5,7 +5,7 @@ namespace Soukicz\SqlAiOptimizer\Result;
 readonly class CandidateQuery {
     public function __construct(
         private string $schema,
-        private string $digest,
+        private string $queryid,
         private string $normalizedQuery,
         private string $impactDescription,
     ) {
@@ -15,8 +15,8 @@ readonly class CandidateQuery {
         return $this->schema;
     }
 
-    public function getDigest(): string {
-        return $this->digest;
+    public function getQueryid(): string {
+        return $this->queryid;
     }
 
     public function getImpactDescription(): string {

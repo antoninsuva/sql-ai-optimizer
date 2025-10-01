@@ -243,12 +243,12 @@ class RunController extends BaseController {
                     continue;
                 }
 
-                $rawSql = $this->analyzedDatabase->getQueryText($query->getDigest(), $query->getSchema());
+                $rawSql = $this->analyzedDatabase->getQueryText($query->getQueryid(), $query->getSchema());
 
                 $this->stateDatabase->createQuery(
                     runId: $runId,
                     groupId: $groupId,
-                    digest: $query->getDigest(),
+                    queryid: $query->getQueryid(),
                     normalizedQuery: $query->getNormalizedQuery(),
                     realQuery: $rawSql,
                     schema: $query->getSchema(),
@@ -273,26 +273,26 @@ class RunController extends BaseController {
             ], 404);
         }
 
-        $digests = [];
+        $queryids = [];
         $queries = [];
         $totalQueriesCount = $this->stateDatabase->getQueriesCount($id);
         foreach ($this->stateDatabase->getQueriesWithoutRealQuery($id) as $query) {
-            if (!isset($digests[$query['queryid']])) {
-                $digests[$query['queryid']] = [];
+            if (!isset($queryids[$query['queryid']])) {
+                $queryids[$query['queryid']] = [];
             }
 
-            $digests[$query['queryid']][] = $query['id'];
+            $queryids[$query['queryid']][] = $query['id'];
             $queries[$query['id']] = $query['schema'];
         }
 
-        if (!empty($digests)) {
-            foreach ($this->analyzedDatabase->getQueryTexts(array_keys($digests)) as $sql) {
-                if (isset($digests[$sql['queryid']])) {
-                    foreach ($digests[$sql['queryid']] as $i => $id) {
+        if (!empty($queryids)) {
+            foreach ($this->analyzedDatabase->getQueryTexts(array_keys($queryids)) as $sql) {
+                if (isset($queryids[$sql['queryid']])) {
+                    foreach ($queryids[$sql['queryid']] as $i => $id) {
                         if ($queries[$id] === $sql['current_schema']) {
                             $this->stateDatabase->setRealQuery($id, $sql['sql_text']);
                             unset($queries[$id]);
-                            unset($digests[$sql['queryid']][$i]);
+                            unset($queryids[$sql['queryid']][$i]);
                         }
                     }
                 }
