@@ -11,6 +11,7 @@ use Soukicz\Llm\LLMConversation;
 use Soukicz\Llm\LLMRequest;
 use Soukicz\Llm\MarkdownFormatter;
 use Soukicz\Llm\Message\LLMMessage;
+use Soukicz\Llm\Message\LLMMessageContents;
 use Soukicz\Llm\Message\LLMMessageText;
 use Soukicz\Llm\Tool\CallbackToolDefinition;
 use Soukicz\SqlAiOptimizer\AIModel\GPT5;
@@ -83,10 +84,10 @@ readonly class QuerySelector {
             name: 'submit_selection',
             description: 'Submit your selection of 20 most expensive queries',
             inputSchema: $submitInputSchema,
-            handler: function (array $input) use (&$groups): string {
+            handler: function (array $input) use (&$groups): LLMMessageContents {
                 $groups[] = $input;
 
-                return 'Selection submitted';
+                return LLMMessageContents::fromString('Selection submitted');
             }
         );
 
@@ -94,8 +95,49 @@ readonly class QuerySelector {
         I need help to optimize my SQL queries on PostgreSQL 13 server. I will provide tool to query pg_stat_statements and get specific queries to optimize.
         
         Query optimization can be achieved using different perspectives like execution time, memory usage, IOPS usage, etc. You must multiple optimization types and request query candidates with different queries to performance schema.
-
-        After examinig each group, submit your selection of queries for this group using tool "submit_selection". I am expecting to get at least four groups with 20 queries each.
+        
+        Table pg_stat_statements looks:
+        
+        CREATE TABLE public.pg_stat_statements (
+        datname text,
+        rolname text,
+        userid oid,
+        dbid oid,
+        queryid bigint,
+        query text,
+        plans bigint,
+        total_plan_time double precision,
+        min_plan_time double precision,
+        max_plan_time double precision,
+        mean_plan_time double precision,
+        stddev_plan_time double precision,
+        calls bigint,
+        total_exec_time double precision,
+        min_exec_time double precision,
+        max_exec_time double precision,
+        mean_exec_time double precision,
+        stddev_exec_time double precision,
+        rows bigint,
+        shared_blks_hit bigint,
+        shared_blks_read bigint,
+        shared_blks_dirtied bigint,
+        shared_blks_written bigint,
+        local_blks_hit bigint,
+        local_blks_read bigint,
+        local_blks_dirtied bigint,
+        local_blks_written bigint,
+        temp_blks_read bigint,
+        temp_blks_written bigint,
+        blk_read_time double precision,
+        blk_write_time double precision,
+        wal_records bigint,
+        wal_fpi bigint,
+        wal_bytes numeric
+        );
+        
+        For analyzing use just attributes that exists in this table.
+        
+        After examining each group, you MUST submit your selection of queries for this group using tool "submit_selection". I am expecting to get at least four groups with 20 queries each. DO NOT end your response asking if you should proceed. Actually submit the selections immediately.
 
         EOT;
 

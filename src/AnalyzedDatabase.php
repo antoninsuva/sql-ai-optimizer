@@ -43,9 +43,9 @@ class AnalyzedDatabase {
         return $this->connection;
     }
 
-    public function getQueryText(string $digest, string $schema): ?string {
+    public function getQueryText(string $queryid, string $schema): ?string {
         foreach (['pg_stat_statements'] as $table) {
-            $sql = $this->connection->query('SELECT query FROM %n WHERE queryid=%s', $table, $digest)->fetchSingle();
+            $sql = $this->connection->query('SELECT query FROM %n WHERE queryid=%s', $table, $queryid)->fetchSingle();
             if ($sql) {
                 return $sql;
             }
