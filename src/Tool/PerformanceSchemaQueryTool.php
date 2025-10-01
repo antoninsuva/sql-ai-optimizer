@@ -15,11 +15,11 @@ class PerformanceSchemaQueryTool implements ToolDefinition {
     }
 
     public function getName(): string {
-        return 'performance_schema_query';
+        return 'pg_stat_statements_query';
     }
 
     public function getDescription(): string {
-        return 'Run SQL query against performance_schema and return results as markdown table. Only first 250 rows are returned.';
+        return 'Run SQL query against pg_stat_statements and return results as markdown table. Only first 250 rows are returned.';
     }
 
     public function getInputSchema(): array {
@@ -29,13 +29,13 @@ class PerformanceSchemaQueryTool implements ToolDefinition {
             'properties' => [
                 'query' => [
                     'type' => 'string',
-                    'description' => 'SQL query to run against performance_schema',
+                    'description' => 'SQL query to run against pg_stat_statements',
                 ],
             ],
         ];
     }
 
     public function handle(array $input): LLMMessageContents {
-        return LLMMessageContents::fromString($this->queryExecutor->executeQuery('performance_schema', $input['query'], $this->cacheDatabaseResults, 250));
+        return LLMMessageContents::fromString($this->queryExecutor->executeQuery('public', $input['query'], $this->cacheDatabaseResults, 250));
     }
 }

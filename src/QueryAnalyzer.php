@@ -6,6 +6,7 @@ use Dibi\DriverException;
 use GuzzleHttp\Promise\PromiseInterface;
 use Soukicz\Llm\Client\LLMChainClient;
 use Soukicz\Llm\Client\OpenAI\Model\GPT41;
+use Soukicz\Llm\Client\OpenAI\Model\GPT4oMini;
 use Soukicz\Llm\Client\OpenAI\OpenAIClient;
 use Soukicz\Llm\Config\ReasoningBudget;
 use Soukicz\Llm\LLMConversation;
@@ -14,6 +15,7 @@ use Soukicz\Llm\LLMResponse;
 use Soukicz\Llm\MarkdownFormatter;
 use Soukicz\Llm\Message\LLMMessage;
 use Soukicz\Llm\Message\LLMMessageText;
+use Soukicz\SqlAiOptimizer\AIModel\GPT5;
 use Soukicz\SqlAiOptimizer\Result\CandidateQuery;
 use Soukicz\SqlAiOptimizer\Service\DatabaseQueryExecutor;
 use Soukicz\SqlAiOptimizer\Tool\QueryTool;
@@ -43,7 +45,6 @@ readonly class QueryAnalyzer {
 
         $explainJson = null;
         if ($rawSql) {
-            $this->analyzedDatabase->getConnection()->query('USE %n', $candidateQuery->getSchema());
 
             try {
                 $explainJson = $this->analyzedDatabase->getConnection()
@@ -153,10 +154,10 @@ readonly class QueryAnalyzer {
         }
 
         $request = new LLMRequest(
-            model: new GPT41(GPT41::VERSION_2025_04_14),
+            model: new GPT5(),
             conversation: $conversation,
             temperature: 1.0,
-            maxTokens: 32_767,
+            maxTokens: 120_000,
             tools: $tools
         );
 

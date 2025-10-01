@@ -4,6 +4,7 @@ namespace Soukicz\SqlAiOptimizer;
 
 use Soukicz\Llm\Client\LLMChainClient;
 use Soukicz\Llm\Client\OpenAI\Model\GPT41;
+use Soukicz\Llm\Client\OpenAI\Model\GPT4oMini;
 use Soukicz\Llm\Client\OpenAI\OpenAIClient;
 use Soukicz\Llm\Config\ReasoningBudget;
 use Soukicz\Llm\LLMConversation;
@@ -12,6 +13,7 @@ use Soukicz\Llm\MarkdownFormatter;
 use Soukicz\Llm\Message\LLMMessage;
 use Soukicz\Llm\Message\LLMMessageText;
 use Soukicz\Llm\Tool\CallbackToolDefinition;
+use Soukicz\SqlAiOptimizer\AIModel\GPT5;
 use Soukicz\SqlAiOptimizer\Result\CandidateQuery;
 use Soukicz\SqlAiOptimizer\Result\CandidateQueryGroup;
 use Soukicz\SqlAiOptimizer\Result\CandidateResult;
@@ -22,7 +24,7 @@ readonly class QuerySelector {
     public function __construct(
         private LLMChainClient $llmChainClient,
         private OpenAIClient $llmClient,
-        private QueryTool $performanceSchemaQueryTool,
+        private PerformanceSchemaQueryTool $performanceSchemaQueryTool,
         private MarkdownFormatter $markdownFormatter
     ) {
     }
@@ -53,15 +55,15 @@ readonly class QuerySelector {
                     'maxItems' => 20,
                     'items' => [
                         'type' => 'object',
-                        'required' => ['query_sample', 'reason'],
+                        'required' => ['digest', 'query_sample', 'schema', 'reason'],
                         'properties' => [
                             'digest' => [
                                 'type' => 'string',
-                                'description' => 'The query digest hash from pg_stat_statements_import',
+                                'description' => 'The query digest hash from pg_stat_statements',
                             ],
                             'query_sample' => [
                                 'type' => 'string',
-                                'description' => 'The query text from pg_stat_statements_import',
+                                'description' => 'The query text from pg_stat_statements',
                             ],
                             'schema' => [
                                 'type' => 'string',
@@ -91,7 +93,7 @@ readonly class QuerySelector {
         $prompt = <<<EOT
         I need help to optimize my SQL queries on PostgreSQL 13 server. I will provide tool to query pg_stat_statements and get specific queries to optimize.
         
-        Query optimization can be achieved using standard table from PostgreSQL named pg_stat_statements.
+        Query optimization can be achieved using different perspectives like execution time, memory usage, IOPS usage, etc. You must multiple optimization types and request query candidates with different queries to performance schema.
 
         After examinig each group, submit your selection of queries for this group using tool "submit_selection". I am expecting to get at least four groups with 20 queries each.
 
@@ -108,10 +110,10 @@ readonly class QuerySelector {
         $response = $this->llmChainClient->run(
             client: $this->llmClient,
             request: new LLMRequest(
-                model: new GPT41(GPT41::VERSION_2025_04_14),
+                model: new GPT5(),
                 conversation: $conversation,
                 temperature: 1.0,
-                maxTokens: 32_767,
+                maxTokens: 120_000,
                 tools: $tools
             ),
         );

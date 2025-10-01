@@ -45,7 +45,6 @@ class DatabaseQueryExecutor {
     private function doExecuteQuery(string $schema, string $query, ?int $maxRows = null): string {
         try {
             $connection = $this->database->getConnection();
-            $connection->query('USE %n', $schema);
             $rows = $connection->query($query)->fetchAll();
 
             $totalRows = count($rows);
