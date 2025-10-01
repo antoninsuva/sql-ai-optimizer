@@ -18,13 +18,13 @@ class AnalyzedDatabase {
         $this->hostname = $parsedUrl['host'];
         $this->port = $parsedUrl['port'] ?? null;
         $dbConfig = [
-            'driver' => 'mysqli',
+            'driver' => 'postgre',
             'host' => $parsedUrl['host'],
             'username' => $parsedUrl['user'],
             'password' => $parsedUrl['pass'],
             'database' => ltrim($parsedUrl['path'], '/'),
             'port' => $parsedUrl['port'] ?? null,
-            'charset' => 'utf8mb4',
+            'charset' => 'utf8',
             'lazy' => true,
         ];
 

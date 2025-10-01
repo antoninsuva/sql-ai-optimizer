@@ -194,6 +194,30 @@ class RunController extends BaseController {
         rmdir($dir);
     }
 
+    #[Route('/test-db', name: 'connection.test', methods: ['GET'])]
+    public function testDatabaseConnection(): Response
+    {
+        try {
+            $connection = $this->analyzedDatabase->getConnection();
+            $now = $connection->query('SELECT NOW()')->fetchSingle();
+            $version = $connection->query('SELECT version()')->fetchSingle();
+
+            return new JsonResponse([
+                'status'   => 'ok',
+                'database' => [
+                    'db_name' => $connection->getConfig('database'),
+                    'version' => $version,
+                    'time'    => $now,
+                ]
+            ]);
+        } catch (\Throwable $e) {
+            return new JsonResponse([
+                'status'  => 'error',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     #[Route('/new-run', name: 'run.new', methods: ['POST'])]
     public function newRun(Request $request): Response {
         $results = $this->querySelector->getCandidateQueries($request->request->get('input'));
