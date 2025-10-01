@@ -1,6 +1,5 @@
 <?php
 use Soukicz\Llm\Cache\FileCache;
-use Soukicz\Llm\Client\Anthropic\AnthropicClient;
 use Soukicz\Llm\Client\LLMChainClient;
 use Soukicz\Llm\MarkdownFormatter;
 use Soukicz\SqlAiOptimizer\LLMFileLogger;
@@ -64,10 +63,10 @@ class Kernel extends BaseKernel {
             ->autoconfigure();
 
         $container->services()
-            ->set(AnthropicClient::class)
+            ->set(\Soukicz\Llm\Client\OpenAI\OpenAIClient::class)
             ->arg('$apiKey', '%env(ANTHROPIC_API_KEY)%')
+            ->arg('$apiOrganization',  '')
             ->arg('$cache', new Reference(FileCache::class))
-            ->arg('$betaFeatures', ['interleaved-thinking-2025-05-14'])
             ->autowire()
             ->autoconfigure();
 

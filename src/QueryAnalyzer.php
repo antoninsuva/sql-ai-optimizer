@@ -4,9 +4,9 @@ namespace Soukicz\SqlAiOptimizer;
 
 use Dibi\DriverException;
 use GuzzleHttp\Promise\PromiseInterface;
-use Soukicz\Llm\Client\Anthropic\AnthropicClient;
-use Soukicz\Llm\Client\Anthropic\Model\AnthropicClaude4Sonnet;
 use Soukicz\Llm\Client\LLMChainClient;
+use Soukicz\Llm\Client\OpenAI\Model\GPT41;
+use Soukicz\Llm\Client\OpenAI\OpenAIClient;
 use Soukicz\Llm\Config\ReasoningBudget;
 use Soukicz\Llm\LLMConversation;
 use Soukicz\Llm\LLMRequest;
@@ -21,7 +21,7 @@ use Soukicz\SqlAiOptimizer\Tool\QueryTool;
 readonly class QueryAnalyzer {
     public function __construct(
         private LLMChainClient $llmChainClient,
-        private AnthropicClient $llmClient,
+        private OpenAIClient $llmClient,
         private AnalyzedDatabase $analyzedDatabase,
         private StateDatabase $stateDatabase,
         private QueryTool $queryTool,
@@ -61,9 +61,9 @@ readonly class QueryAnalyzer {
         }
 
         $prompt = <<<EOT
-        I need help with optimizing a MySQL 8 query. I have identified this query using performance schema as consuming too many resources. I will provide you with an example query and the schema of tables used in the query.
+        I need help with optimizing a PostgreSQL 13 query. I have identified this query using pg_stat_statements as consuming too many resources. I will provide you with an example query and the schema of tables used in the query.
 
-        Use provided tool to get more information about tables or its data structure if needed -you can also use to check statistics in performance_schema by provided digest.
+        Use provided tool to get more information about tables or its data structure if needed -you can also use to check statistics in pg_stat_statements by provided digest.
 
         Analyze all information and provide me with instructions to change the query, update schema or how to split to more manageable queries in PHP.
 
@@ -95,13 +95,12 @@ readonly class QueryAnalyzer {
         }
 
         $prompt .= <<<EOT
-        ### Schema
+        ### Schema postgres database of tables and their indexes
         EOT;
 
         // Get all actual tables from the database for case-insensitive matching
-        $this->analyzedDatabase->getConnection()->query('USE %n', $candidateQuery->getSchema());
         $actualTables = $this->analyzedDatabase->getConnection()
-            ->query('SHOW TABLES')->fetchAll();
+            ->query('SELECT tablename FROM pg_catalog.pg_tables where schemaname = \'public\'')->fetchAll();
         $actualTableMap = [];
         foreach ($actualTables as $tableRow) {
             $tableName = array_values((array)$tableRow)[0]; // Get the table name from the result
@@ -118,53 +117,11 @@ readonly class QueryAnalyzer {
             $table = $actualTableMap[$lookupKey]; // Use the correctly cased table name
 
             $schema = $this->analyzedDatabase->getConnection()
-                ->query('SHOW CREATE TABLE %n', $table)->fetch()['Create Table'];
+                ->query('SELECT pg_get_tabledef(\'public\'::varchar, \'%n\'::varchar, false) as ct', $table)->fetch()['ct'];
 
             $prompt .= "\n\n#### $table\n```\n$schema\n```\n";
 
-            // Add table indexes information
-            $indexes = $this->analyzedDatabase->getConnection()
-                ->query('SHOW INDEX FROM %n', $table)->fetchAll();
 
-            if (!empty($indexes)) {
-                $prompt .= "\n#### Indexes for $table\n```\n";
-
-                // Group indexes by name to handle multi-column indexes
-                $groupedIndexes = [];
-                foreach ($indexes as $index) {
-                    $indexName = $index['Key_name'];
-                    if (!isset($groupedIndexes[$indexName])) {
-                        $groupedIndexes[$indexName] = [
-                            'name' => $indexName,
-                            'columns' => [],
-                            'unique' => !$index['Non_unique'],
-                            'index_type' => $index['Index_type'],
-                        ];
-                    }
-                    // Sort columns by their position in the index
-                    $groupedIndexes[$indexName]['columns'][$index['Seq_in_index']] = $index['Column_name'];
-                }
-
-                // Generate SQL for each index
-                foreach ($groupedIndexes as $index) {
-                    // Skip PRIMARY key as it's already in CREATE TABLE statement
-                    if ($index['name'] === 'PRIMARY') {
-                        continue;
-                    }
-
-                    // Sort columns by position
-                    ksort($index['columns']);
-                    $columnList = implode(', ', $index['columns']);
-
-                    // Build the CREATE INDEX statement
-                    $uniqueKeyword = $index['unique'] ? 'UNIQUE ' : '';
-                    $prompt .= "ALTER TABLE `$table` ADD {$uniqueKeyword}INDEX `{$index['name']}` ($columnList) USING {$index['index_type']};\n";
-                }
-                $prompt .= "```\n";
-
-                $indexStats = $this->databaseQueryExecutor->executeQuery($candidateQuery->getSchema(), "SHOW INDEX FROM $table");
-                $prompt .= "\n\n#### SHOW INDEX FROM $table\n\n$indexStats\n\n";
-            }
         }
 
         $prompt .= <<<EOT
@@ -196,12 +153,11 @@ readonly class QueryAnalyzer {
         }
 
         $request = new LLMRequest(
-            model: new AnthropicClaude4Sonnet(AnthropicClaude4Sonnet::VERSION_20250514),
+            model: new GPT41(GPT41::VERSION_2025_04_14),
             conversation: $conversation,
             temperature: 1.0,
-            maxTokens: 50_000,
-            tools: $tools,
-            reasoningConfig: new ReasoningBudget(30_000)
+            maxTokens: 32_767,
+            tools: $tools
         );
 
         return $this->llmChainClient->runAsync(

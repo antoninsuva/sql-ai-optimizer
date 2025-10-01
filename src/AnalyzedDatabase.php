@@ -44,8 +44,8 @@ class AnalyzedDatabase {
     }
 
     public function getQueryText(string $digest, string $schema): ?string {
-        foreach (['events_statements_history', 'events_statements_history_long'] as $table) {
-            $sql = $this->connection->query('SELECT sql_text FROM performance_schema.%n WHERE digest=%s', $table, $digest, ' AND current_schema = %s', $schema)->fetchSingle();
+        foreach (['pg_stat_statements_import'] as $table) {
+            $sql = $this->connection->query('SELECT query FROM %n WHERE queryid=%s', $table, $digest)->fetchSingle();
             if ($sql) {
                 return $sql;
             }
@@ -57,12 +57,12 @@ class AnalyzedDatabase {
     public function getQueryTexts(array $digests): array {
         $sqls = [];
 
-        foreach (['events_statements_history', 'events_statements_history_long'] as $table) {
-            $list = $this->connection->query('SELECT sql_text,digest,current_schema FROM performance_schema.%n', $table, ' WHERE digest IN (%s)', $digests)->fetchAll();
+        foreach (['pg_stat_statements_import'] as $table) {
+            $list = $this->connection->query('SELECT query, queryid, \'public\' as current_schema FROM %n', $table, ' WHERE queryid IN (%s)', $digests)->fetchAll();
             foreach ($list as $item) {
                 $sqls[] = [
-                    'sql_text' => $item['sql_text'],
-                    'digest' => $item['digest'],
+                    'sql_text' => $item['query'],
+                    'digest' => $item['queryid'],
                     'current_schema' => $item['current_schema'],
                 ];
             }
